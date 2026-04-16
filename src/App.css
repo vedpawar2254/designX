@@ -1437,10 +1437,11 @@
 .final-character {
   position: absolute;
   z-index: 3;
-  left: -10px;
-  bottom: 0;
-  width: 288px;
+  left: 10px;
+  bottom: 10px;
+  width: 240px;
   max-width: none;
+  object-fit: contain;
 }
 
 .final-message {
