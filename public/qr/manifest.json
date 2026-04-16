@@ -1,0 +1,44 @@
+[
+  {
+    "letter": "D",
+    "label": "Scan to find D",
+    "payload": "DESIGNX:SCAN:D",
+    "file": "/qr/qr-d.svg"
+  },
+  {
+    "letter": "E",
+    "label": "Scan to find E",
+    "payload": "DESIGNX:SCAN:E",
+    "file": "/qr/qr-e.svg"
+  },
+  {
+    "letter": "S",
+    "label": "Scan to find S",
+    "payload": "DESIGNX:SCAN:S",
+    "file": "/qr/qr-s.svg"
+  },
+  {
+    "letter": "I",
+    "label": "Scan to find I",
+    "payload": "DESIGNX:SCAN:I",
+    "file": "/qr/qr-i.svg"
+  },
+  {
+    "letter": "G",
+    "label": "Scan to find G",
+    "payload": "DESIGNX:SCAN:G",
+    "file": "/qr/qr-g.svg"
+  },
+  {
+    "letter": "N",
+    "label": "Scan to find N",
+    "payload": "DESIGNX:SCAN:N",
+    "file": "/qr/qr-n.svg"
+  },
+  {
+    "letter": "X",
+    "label": "Scan to find X",
+    "payload": "DESIGNX:SCAN:X",
+    "file": "/qr/qr-x.svg"
+  }
+]
