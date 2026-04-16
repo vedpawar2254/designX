@@ -1049,6 +1049,8 @@ function App() {
             <span /><span /><span /><span />
             <span /><span /><span /><span />
             <span /><span /><span /><span />
+            <span /><span /><span /><span />
+            <span /><span /><span /><span />
           </div>
 
           <h2 className="final-logo animated-title" aria-label="DESIGNX">
