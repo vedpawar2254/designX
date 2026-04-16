@@ -62,7 +62,8 @@
 }
 
 .splash-screen.is-transitioning .welcome-text {
-  animation: splash-welcome-fade 0.42s ease forwards;
+  opacity: 0;
+  animation: none;
 }
 
 .splash-screen.is-transitioning .logo-text {
@@ -758,7 +759,7 @@
   border: 0;
   background: transparent;
   padding: 0;
-  cursor: pointer;
+  cursor: crosshair;
 }
 
 .scanner-frame {
@@ -841,6 +842,22 @@
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   text-align: center;
+}
+
+.scanner-fallback-btn {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(31, 10, 39, 0.58);
+  color: #f7effa;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  cursor: pointer;
 }
 
 .scanner-complete-word {
@@ -1310,6 +1327,41 @@
   width: 370px;
 }
 
+.final-graffiti-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.final-graffiti-burst span {
+  --dx: 0px;
+  --dy: 0px;
+  --rot: 0deg;
+  --delay: 0s;
+  position: absolute;
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  opacity: 0;
+  background: rgba(246, 213, 121, 0.9);
+  box-shadow: 0 0 0 2px rgba(35, 6, 42, 0.22);
+}
+
+.final-graffiti-burst span:nth-child(1) { top: 96px; left: 20px; --dx: -22px; --dy: -36px; --rot: -26deg; --delay: 0.02s; }
+.final-graffiti-burst span:nth-child(2) { top: 128px; left: 92px; --dx: 26px; --dy: -42px; --rot: 30deg; --delay: 0.08s; background: rgba(255, 187, 196, 0.9); }
+.final-graffiti-burst span:nth-child(3) { top: 74px; right: 78px; --dx: 34px; --dy: -30px; --rot: 42deg; --delay: 0.12s; }
+.final-graffiti-burst span:nth-child(4) { top: 184px; right: 18px; --dx: 40px; --dy: 22px; --rot: 50deg; --delay: 0.2s; background: rgba(184, 225, 255, 0.9); }
+.final-graffiti-burst span:nth-child(5) { top: 342px; left: 8px; --dx: -36px; --dy: 24px; --rot: -38deg; --delay: 0.16s; }
+.final-graffiti-burst span:nth-child(6) { top: 426px; left: 118px; --dx: 16px; --dy: -34px; --rot: -52deg; --delay: 0.25s; background: rgba(255, 166, 210, 0.9); }
+.final-graffiti-burst span:nth-child(7) { top: 456px; right: 94px; --dx: -24px; --dy: -28px; --rot: 36deg; --delay: 0.32s; }
+.final-graffiti-burst span:nth-child(8) { top: 512px; right: 26px; --dx: 28px; --dy: -8px; --rot: -44deg; --delay: 0.36s; background: rgba(189, 239, 163, 0.9); }
+.final-graffiti-burst span:nth-child(9) { bottom: 210px; left: 30px; --dx: -30px; --dy: 10px; --rot: -58deg; --delay: 0.43s; }
+.final-graffiti-burst span:nth-child(10) { bottom: 148px; left: 176px; --dx: 22px; --dy: 26px; --rot: 62deg; --delay: 0.48s; background: rgba(255, 208, 144, 0.9); }
+.final-graffiti-burst span:nth-child(11) { bottom: 104px; right: 128px; --dx: -18px; --dy: 34px; --rot: 42deg; --delay: 0.54s; }
+.final-graffiti-burst span:nth-child(12) { bottom: 86px; right: 24px; --dx: 26px; --dy: 28px; --rot: -34deg; --delay: 0.6s; background: rgba(244, 179, 255, 0.9); }
+
 .final-logo {
   position: absolute;
   z-index: 4;
@@ -1391,14 +1443,16 @@
 .final-message {
   position: absolute;
   z-index: 4;
-  right: 22px;
-  bottom: 74px;
+  left: 10px;
+  right: 10px;
+  bottom: 76px;
   margin: 0;
+  text-align: center;
   color: #f8f5fb;
   font-family: 'Jersey 20', Impact, Haettenschweiler, 'Arial Black', sans-serif;
-  font-size: 66px;
+  font-size: 52px;
   line-height: 1;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
   text-shadow: 0 6px 10px rgba(24, 6, 30, 0.35);
 }
 
@@ -1425,6 +1479,12 @@
   animation:
     typing-reveal var(--typing-duration) steps(var(--typing-steps), end) 0.24s both,
     final-message-pulse 1.7s ease-in-out 1.8s infinite;
+}
+
+.final-screen.is-active .final-graffiti-burst span {
+  animation:
+    final-graffiti-burst 0.9s cubic-bezier(0.2, 0.88, 0.28, 1) var(--delay) both,
+    final-graffiti-drift 2.3s ease-in-out calc(0.9s + var(--delay)) infinite alternate;
 }
 
 .final-screen.is-active .final-dots-left span,
@@ -1663,5 +1723,25 @@
   50% {
     opacity: 0.45;
     transform: scale(1.15);
+  }
+}
+
+@keyframes final-graffiti-burst {
+  from {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4) rotate(0deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) scale(1.4) rotate(var(--rot));
+  }
+}
+
+@keyframes final-graffiti-drift {
+  from {
+    transform: translate(var(--dx), var(--dy)) scale(1.4) rotate(var(--rot));
+  }
+  to {
+    transform: translate(calc(var(--dx) * 1.15), calc(var(--dy) * 1.15)) scale(1.15) rotate(calc(var(--rot) + 14deg));
   }
 }

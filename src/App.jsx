@@ -3,6 +3,25 @@ import './App.css'
 
 const SCREEN_STORAGE_KEY = 'designx-current-screen'
 const SPLASH_TRANSITION_MS = 680
+const SCANNER_QR_TARGETS = {
+  scanner: 'DESIGNX:SCAN:D',
+  'scanner-e': 'DESIGNX:SCAN:E',
+  'scanner-s': 'DESIGNX:SCAN:S',
+  'scanner-i': 'DESIGNX:SCAN:I',
+  'scanner-g': 'DESIGNX:SCAN:G',
+  'scanner-n': 'DESIGNX:SCAN:N',
+  'scanner-x': 'DESIGNX:SCAN:X',
+}
+const SCANNER_SCREENS = Object.keys(SCANNER_QR_TARGETS)
+let jsQrDecoderPromise
+
+const loadJsQrDecoder = () => {
+  if (!jsQrDecoderPromise) {
+    jsQrDecoderPromise = import('jsqr').then((module) => module.default)
+  }
+  return jsQrDecoderPromise
+}
+
 const ALL_SCREENS = [
   'splash',
   'intro',
@@ -23,8 +42,54 @@ const ALL_SCREENS = [
   'scanner-g-complete',
   'scanner-n',
   'scanner-n-complete',
+  'scanner-x',
   'final',
 ]
+
+const nextScreenMap = {
+  intro: 'challenge-1',
+  'challenge-1': 'challenge-2',
+  'challenge-2': 'challenge-3',
+  'challenge-3': 'play',
+  play: 'entry-1',
+  'entry-1': 'scanner',
+  scanner: 'scanner-complete',
+  'scanner-complete': 'scanner-e',
+  'scanner-e': 'scanner-e-complete',
+  'scanner-e-complete': 'scanner-s',
+  'scanner-s': 'scanner-s-complete',
+  'scanner-s-complete': 'scanner-i',
+  'scanner-i': 'scanner-i-complete',
+  'scanner-i-complete': 'scanner-g',
+  'scanner-g': 'scanner-g-complete',
+  'scanner-g-complete': 'scanner-n',
+  'scanner-n': 'scanner-n-complete',
+  'scanner-n-complete': 'scanner-x',
+  'scanner-x': 'final',
+}
+
+const previousScreenMap = {
+  intro: 'splash',
+  'challenge-1': 'intro',
+  'challenge-2': 'challenge-1',
+  'challenge-3': 'challenge-2',
+  play: 'challenge-3',
+  'entry-1': 'play',
+  scanner: 'entry-1',
+  'scanner-complete': 'scanner',
+  'scanner-e': 'scanner-complete',
+  'scanner-e-complete': 'scanner-e',
+  'scanner-s': 'scanner-e-complete',
+  'scanner-s-complete': 'scanner-s',
+  'scanner-i': 'scanner-s-complete',
+  'scanner-i-complete': 'scanner-i',
+  'scanner-g': 'scanner-i-complete',
+  'scanner-g-complete': 'scanner-g',
+  'scanner-n': 'scanner-g-complete',
+  'scanner-n-complete': 'scanner-n',
+  'scanner-x': 'scanner-n-complete',
+  final: 'scanner-x',
+}
 
 function App() {
   const [screen, setScreen] = useState(() => {
@@ -35,6 +100,7 @@ function App() {
   const [showSpeech, setShowSpeech] = useState(false)
   const [isSplashTransitioning, setIsSplashTransitioning] = useState(false)
   const [cameraError, setCameraError] = useState('')
+  const [isScanFallbackEnabled, setIsScanFallbackEnabled] = useState(false)
   const splashTransitionTimerRef = useRef(null)
   const scannerVideoRef = useRef(null)
   const scannerEVideoRef = useRef(null)
@@ -42,47 +108,7 @@ function App() {
   const scannerIVideoRef = useRef(null)
   const scannerGVideoRef = useRef(null)
   const scannerNVideoRef = useRef(null)
-  const nextScreenMap = {
-    intro: 'challenge-1',
-    'challenge-1': 'challenge-2',
-    'challenge-2': 'challenge-3',
-    'challenge-3': 'play',
-    play: 'entry-1',
-    'entry-1': 'scanner',
-    scanner: 'scanner-complete',
-    'scanner-complete': 'scanner-e',
-    'scanner-e': 'scanner-e-complete',
-    'scanner-e-complete': 'scanner-s',
-    'scanner-s': 'scanner-s-complete',
-    'scanner-s-complete': 'scanner-i',
-    'scanner-i': 'scanner-i-complete',
-    'scanner-i-complete': 'scanner-g',
-    'scanner-g': 'scanner-g-complete',
-    'scanner-g-complete': 'scanner-n',
-    'scanner-n': 'scanner-n-complete',
-    'scanner-n-complete': 'final',
-  }
-  const previousScreenMap = {
-    intro: 'splash',
-    'challenge-1': 'intro',
-    'challenge-2': 'challenge-1',
-    'challenge-3': 'challenge-2',
-    play: 'challenge-3',
-    'entry-1': 'play',
-    scanner: 'entry-1',
-    'scanner-complete': 'scanner',
-    'scanner-e': 'scanner-complete',
-    'scanner-e-complete': 'scanner-e',
-    'scanner-s': 'scanner-e-complete',
-    'scanner-s-complete': 'scanner-s',
-    'scanner-i': 'scanner-s-complete',
-    'scanner-i-complete': 'scanner-i',
-    'scanner-g': 'scanner-i-complete',
-    'scanner-g-complete': 'scanner-g',
-    'scanner-n': 'scanner-g-complete',
-    'scanner-n-complete': 'scanner-n',
-    final: 'scanner-n-complete',
-  }
+  const scannerXVideoRef = useRef(null)
 
   useEffect(() => {
     if (screen !== 'intro') return
@@ -105,17 +131,13 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (
-      screen !== 'scanner'
-      && screen !== 'scanner-e'
-      && screen !== 'scanner-s'
-      && screen !== 'scanner-i'
-      && screen !== 'scanner-g'
-      && screen !== 'scanner-n'
-    ) return
+    if (!SCANNER_SCREENS.includes(screen)) return
 
     let isActive = true
     let stream
+    let scanTimer
+    let barcodeDetector = null
+    let isDecoding = false
     const videoElementByScreen = {
       scanner: scannerVideoRef.current,
       'scanner-e': scannerEVideoRef.current,
@@ -123,8 +145,13 @@ function App() {
       'scanner-i': scannerIVideoRef.current,
       'scanner-g': scannerGVideoRef.current,
       'scanner-n': scannerNVideoRef.current,
+      'scanner-x': scannerXVideoRef.current,
     }
     const videoElement = videoElementByScreen[screen]
+    const expectedPayload = SCANNER_QR_TARGETS[screen]
+    const expectedLetter = expectedPayload.at(-1)
+    const frameCanvas = document.createElement('canvas')
+    const frameContext = frameCanvas.getContext('2d', { willReadFrequently: true })
 
     const stopStream = () => {
       if (stream) {
@@ -136,13 +163,60 @@ function App() {
       }
     }
 
+    const stopScanTimer = () => {
+      if (!scanTimer) return
+      window.clearInterval(scanTimer)
+      scanTimer = null
+    }
+
+    const decodeWithJsQr = async () => {
+      if (!videoElement || !frameContext) return ''
+      const width = videoElement.videoWidth
+      const height = videoElement.videoHeight
+      if (!width || !height) return ''
+
+      if (frameCanvas.width !== width || frameCanvas.height !== height) {
+        frameCanvas.width = width
+        frameCanvas.height = height
+      }
+
+      frameContext.drawImage(videoElement, 0, 0, width, height)
+      const frame = frameContext.getImageData(0, 0, width, height)
+      const jsQr = await loadJsQrDecoder()
+      const code = jsQr(frame.data, width, height, { inversionAttempts: 'attemptBoth' })
+      return code?.data?.trim()?.toUpperCase() ?? ''
+    }
+
+    const detectQrPayload = async () => {
+      if (!videoElement || videoElement.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return ''
+
+      if (barcodeDetector) {
+        const results = await barcodeDetector.detect(videoElement)
+        const match = results.find((item) => typeof item.rawValue === 'string')
+        return match?.rawValue?.trim()?.toUpperCase() ?? ''
+      }
+
+      return decodeWithJsQr()
+    }
+
     const startScanner = async () => {
+      setCameraError('')
+      setIsScanFallbackEnabled(false)
+
       if (!navigator.mediaDevices?.getUserMedia) {
         setCameraError('Camera is not supported on this device.')
+        setIsScanFallbackEnabled(true)
         return
       }
 
       try {
+        if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+          const supportedFormats = await window.BarcodeDetector.getSupportedFormats?.()
+          if (!supportedFormats || supportedFormats.includes('qr_code')) {
+            barcodeDetector = new window.BarcodeDetector({ formats: ['qr_code'] })
+          }
+        }
+
         stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: 'environment' } },
           audio: false,
@@ -161,10 +235,40 @@ function App() {
           }
         }
 
-        setCameraError('')
+        const scanFrame = async () => {
+          if (!isActive || isDecoding) return
+          isDecoding = true
+          try {
+            const detectedPayload = await detectQrPayload()
+            if (!detectedPayload) return
+
+            if (detectedPayload === expectedPayload) {
+              const next = nextScreenMap[screen]
+              stopScanTimer()
+              stopStream()
+              setCameraError('')
+              setIsScanFallbackEnabled(false)
+              if (next) setScreen(next)
+              return
+            }
+
+            setCameraError(`Wrong QR code. Scan the ${expectedLetter} code.`)
+          } catch {
+            setCameraError('Unable to read QR right now. Hold the code steady and try again.')
+          } finally {
+            isDecoding = false
+          }
+        }
+
+        scanTimer = window.setInterval(() => {
+          void scanFrame()
+        }, 300)
+
+        setCameraError(`Scanning for ${expectedLetter}...`)
       } catch {
         if (isActive) {
-          setCameraError('Camera access denied. Tap scanner to continue for now.')
+          setCameraError('Camera access denied.')
+          setIsScanFallbackEnabled(true)
         }
       }
     }
@@ -173,6 +277,7 @@ function App() {
 
     return () => {
       isActive = false
+      stopScanTimer()
       stopStream()
     }
   }, [screen])
@@ -383,6 +488,9 @@ function App() {
 
         <section className={`screen entry-screen ${screen === 'entry-1' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="entry-watermark animated-title" aria-hidden="true">DESIGNX</p>
 
           <div className="pixel-dots entry-dots-left" aria-hidden="true">
@@ -427,7 +535,7 @@ function App() {
             <span /><span /><span /><span />
           </div>
 
-          <button className="scanner-tap-target" type="button" aria-label="Mock QR scan success" onClick={handleNext}>
+          <div className="scanner-tap-target">
             <div className="scanner-frame">
               <video ref={scannerVideoRef} className="scanner-video" autoPlay muted playsInline />
               <span className="scanner-corner corner-top-left" />
@@ -435,14 +543,22 @@ function App() {
               <span className="scanner-corner corner-bottom-left" />
               <span className="scanner-corner corner-bottom-right" />
             </div>
-          </button>
+          </div>
 
           <p className="scanner-label typing-text">scan to find D</p>
           {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
         </section>
 
         <section className={`screen scanner-complete-screen ${screen === 'scanner-complete' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="scanner-complete-word animated-title" aria-label="DESIGNX">
             <span className="scanner-complete-d">D</span>
             <span className="scanner-complete-rest">ESIGNX</span>
@@ -491,7 +607,7 @@ function App() {
             <span /><span /><span /><span />
           </div>
 
-          <button className="scanner-tap-target" type="button" aria-label="Mock QR scan success" onClick={handleNext}>
+          <div className="scanner-tap-target">
             <div className="scanner-frame">
               <video ref={scannerEVideoRef} className="scanner-video" autoPlay muted playsInline />
               <span className="scanner-corner corner-top-left" />
@@ -499,14 +615,22 @@ function App() {
               <span className="scanner-corner corner-bottom-left" />
               <span className="scanner-corner corner-bottom-right" />
             </div>
-          </button>
+          </div>
 
           <p className="scanner-label typing-text">scan to find E</p>
           {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
         </section>
 
         <section className={`screen scanner-complete-screen scanner-e-complete-screen ${screen === 'scanner-e-complete' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="scanner-e-complete-word animated-title" aria-label="DESIGNX">
             <span className="scanner-e-complete-d">D</span>
             <span className="scanner-e-complete-e">E</span>
@@ -556,7 +680,7 @@ function App() {
             <span /><span /><span /><span />
           </div>
 
-          <button className="scanner-tap-target" type="button" aria-label="Mock QR scan success" onClick={handleNext}>
+          <div className="scanner-tap-target">
             <div className="scanner-frame">
               <video ref={scannerSVideoRef} className="scanner-video" autoPlay muted playsInline />
               <span className="scanner-corner corner-top-left" />
@@ -564,14 +688,22 @@ function App() {
               <span className="scanner-corner corner-bottom-left" />
               <span className="scanner-corner corner-bottom-right" />
             </div>
-          </button>
+          </div>
 
           <p className="scanner-label typing-text">scan to find S</p>
           {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
         </section>
 
         <section className={`screen scanner-complete-screen scanner-s-complete-screen ${screen === 'scanner-s-complete' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="scanner-s-complete-word animated-title" aria-label="DESIGNX">
             <span className="scanner-s-complete-de">DE</span>
             <span className="scanner-s-complete-s">S</span>
@@ -621,7 +753,7 @@ function App() {
             <span /><span /><span /><span />
           </div>
 
-          <button className="scanner-tap-target" type="button" aria-label="Mock QR scan success" onClick={handleNext}>
+          <div className="scanner-tap-target">
             <div className="scanner-frame">
               <video ref={scannerIVideoRef} className="scanner-video" autoPlay muted playsInline />
               <span className="scanner-corner corner-top-left" />
@@ -629,14 +761,22 @@ function App() {
               <span className="scanner-corner corner-bottom-left" />
               <span className="scanner-corner corner-bottom-right" />
             </div>
-          </button>
+          </div>
 
           <p className="scanner-label typing-text">scan to find I</p>
           {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
         </section>
 
         <section className={`screen scanner-complete-screen scanner-i-complete-screen ${screen === 'scanner-i-complete' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="scanner-i-complete-word animated-title" aria-label="DESIGNX">
             <span className="scanner-i-complete-des">DES</span>
             <span className="scanner-i-complete-i">I</span>
@@ -686,7 +826,7 @@ function App() {
             <span /><span /><span /><span />
           </div>
 
-          <button className="scanner-tap-target" type="button" aria-label="Mock QR scan success" onClick={handleNext}>
+          <div className="scanner-tap-target">
             <div className="scanner-frame">
               <video ref={scannerGVideoRef} className="scanner-video" autoPlay muted playsInline />
               <span className="scanner-corner corner-top-left" />
@@ -694,14 +834,22 @@ function App() {
               <span className="scanner-corner corner-bottom-left" />
               <span className="scanner-corner corner-bottom-right" />
             </div>
-          </button>
+          </div>
 
           <p className="scanner-label typing-text">scan to find G</p>
           {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
         </section>
 
         <section className={`screen scanner-complete-screen scanner-g-complete-screen ${screen === 'scanner-g-complete' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="scanner-g-complete-word animated-title" aria-label="DESIGNX">
             <span className="scanner-g-complete-desi">DESI</span>
             <span className="scanner-g-complete-g">G</span>
@@ -751,7 +899,7 @@ function App() {
             <span /><span /><span /><span />
           </div>
 
-          <button className="scanner-tap-target" type="button" aria-label="Mock QR scan success" onClick={handleNext}>
+          <div className="scanner-tap-target">
             <div className="scanner-frame">
               <video ref={scannerNVideoRef} className="scanner-video" autoPlay muted playsInline />
               <span className="scanner-corner corner-top-left" />
@@ -759,14 +907,22 @@ function App() {
               <span className="scanner-corner corner-bottom-left" />
               <span className="scanner-corner corner-bottom-right" />
             </div>
-          </button>
+          </div>
 
           <p className="scanner-label typing-text">scan to find N</p>
           {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
         </section>
 
         <section className={`screen scanner-complete-screen scanner-n-complete-screen ${screen === 'scanner-n-complete' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
           <p className="scanner-n-complete-word animated-title" aria-label="DESIGNX">
             <span className="scanner-n-complete-design">DESIG</span>
             <span className="scanner-n-complete-n">N</span>
@@ -805,8 +961,54 @@ function App() {
           </button>
         </section>
 
+        <section className={`screen scanner-screen scanner-screen-x ${screen === 'scanner-x' ? 'is-active' : 'is-hidden'}`}>
+          <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
+          <p className="scanner-n-watermark animated-title" aria-label="DESIGNX">
+            <span className="scanner-n-found">DESIGN</span>
+            <span className="scanner-n-rest">X</span>
+          </p>
+
+          <div className="pixel-dots scanner-dots-left" aria-hidden="true">
+            <span /><span /><span /><span />
+          </div>
+
+          <div className="pixel-dots scanner-dots-right" aria-hidden="true">
+            <span /><span /><span /><span />
+            <span /><span /><span /><span />
+          </div>
+
+          <div className="scanner-tap-target">
+            <div className="scanner-frame">
+              <video ref={scannerXVideoRef} className="scanner-video" autoPlay muted playsInline />
+              <span className="scanner-corner corner-top-left" />
+              <span className="scanner-corner corner-top-right" />
+              <span className="scanner-corner corner-bottom-left" />
+              <span className="scanner-corner corner-bottom-right" />
+            </div>
+          </div>
+
+          <p className="scanner-label typing-text">scan to find X</p>
+          {cameraError ? <p className="scanner-error">{cameraError}</p> : null}
+          {isScanFallbackEnabled ? (
+            <button className="scanner-fallback-btn" type="button" onClick={handleNext}>
+              Continue without camera
+            </button>
+          ) : null}
+        </section>
+
         <section className={`screen final-screen ${screen === 'final' ? 'is-active' : 'is-hidden'}`}>
           <div className="grid-overlay" />
+          <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
+            &#8249;
+          </button>
+          <div className="final-graffiti-burst" aria-hidden="true">
+            <span /><span /><span /><span />
+            <span /><span /><span /><span />
+            <span /><span /><span /><span />
+          </div>
 
           <h2 className="final-logo animated-title" aria-label="DESIGNX">
             <span className="final-logo-text">DESIGN</span>

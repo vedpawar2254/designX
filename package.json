@@ -11,6 +11,7 @@
     "generate:qrs": "node scripts/generate-qrs.mjs"
   },
   "dependencies": {
+    "jsqr": "^1.4.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
