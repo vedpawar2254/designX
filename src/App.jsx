@@ -110,30 +110,31 @@ function App() {
   const scannerNVideoRef = useRef(null)
   const scannerXVideoRef = useRef(null)
 
-  // JS-driven viewport measurement — works on every phone
+  // JS-driven scaling — compute scale from actual viewport, set as CSS var
   useEffect(() => {
-    const updateViewport = () => {
+    const updateScale = () => {
       const vp = window.visualViewport
       const w = vp ? vp.width : window.innerWidth
       const h = vp ? vp.height : window.innerHeight
-      document.documentElement.style.setProperty('--app-height', `${h}px`)
-      document.documentElement.style.setProperty('--app-width', `${w}px`)
+      // 0.97 factor gives a small margin so nothing clips
+      const scale = Math.min(1, (w / 393) * 0.97, (h / 852) * 0.97)
+      document.documentElement.style.setProperty('--frame-scale', scale.toFixed(4))
     }
-    updateViewport()
+    updateScale()
     const vp = window.visualViewport
     if (vp) {
-      vp.addEventListener('resize', updateViewport)
-      vp.addEventListener('scroll', updateViewport)
+      vp.addEventListener('resize', updateScale)
+      vp.addEventListener('scroll', updateScale)
     }
-    window.addEventListener('resize', updateViewport)
-    window.addEventListener('orientationchange', updateViewport)
+    window.addEventListener('resize', updateScale)
+    window.addEventListener('orientationchange', updateScale)
     return () => {
       if (vp) {
-        vp.removeEventListener('resize', updateViewport)
-        vp.removeEventListener('scroll', updateViewport)
+        vp.removeEventListener('resize', updateScale)
+        vp.removeEventListener('scroll', updateScale)
       }
-      window.removeEventListener('resize', updateViewport)
-      window.removeEventListener('orientationchange', updateViewport)
+      window.removeEventListener('resize', updateScale)
+      window.removeEventListener('orientationchange', updateScale)
     }
   }, [])
 
