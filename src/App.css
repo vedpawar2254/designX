@@ -3,9 +3,12 @@
   --safe-inset-right: env(safe-area-inset-right, 0px);
   --safe-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-inset-left: env(safe-area-inset-left, 0px);
+  --sleek-gutter: clamp(8px, 2.2vmin, 18px);
   --safe-width: calc(100vw - var(--safe-inset-left) - var(--safe-inset-right));
   --safe-height: calc(100dvh - var(--safe-inset-top) - var(--safe-inset-bottom));
-  --frame-scale: min(1, calc((var(--safe-width) - 2px) / 393), calc((var(--safe-height) - 2px) / 852));
+  --fit-width: calc(var(--safe-width) - (var(--sleek-gutter) * 2));
+  --fit-height: calc(var(--safe-height) - (var(--sleek-gutter) * 2));
+  --frame-scale: min(1, calc(var(--fit-width) / 393), calc(var(--fit-height) / 852));
   width: 100vw;
   height: 100vh;
   height: 100svh;
@@ -13,14 +16,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--safe-inset-top) var(--safe-inset-right) var(--safe-inset-bottom) var(--safe-inset-left);
+  padding:
+    calc(var(--safe-inset-top) + var(--sleek-gutter))
+    calc(var(--safe-inset-right) + var(--sleek-gutter))
+    calc(var(--safe-inset-bottom) + var(--sleek-gutter))
+    calc(var(--safe-inset-left) + var(--sleek-gutter));
   background: #1a0a1e;
   overflow: hidden;
 }
 
 .phone-frame-shell {
-  width: calc(393px * var(--frame-scale));
-  height: calc(852px * var(--frame-scale));
+  width: calc((393px * var(--frame-scale)) + 2px);
+  height: calc((852px * var(--frame-scale)) + 2px);
+  filter: drop-shadow(0 18px 34px rgba(8, 3, 12, 0.55));
 }
 
 .phone-frame {
@@ -30,6 +38,7 @@
   overflow: hidden;
   transform: scale(var(--frame-scale));
   transform-origin: top left;
+  border-radius: 28px;
 }
 
 .animated-title {
