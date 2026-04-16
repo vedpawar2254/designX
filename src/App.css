@@ -3,17 +3,14 @@
   --safe-inset-right: env(safe-area-inset-right, 0px);
   --safe-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-inset-left: env(safe-area-inset-left, 0px);
-  --sleek-gutter: clamp(8px, 2.2vmin, 18px);
-  --next-button-safe-lift: clamp(10px, 2.8vmin, 22px);
-  --safe-width: calc(100vw - var(--safe-inset-left) - var(--safe-inset-right));
-  --safe-height: calc(100dvh - var(--safe-inset-top) - var(--safe-inset-bottom));
+  --sleek-gutter: clamp(4px, 1.5vmin, 12px);
+  --safe-width: calc(var(--app-width, 100vw) - var(--safe-inset-left) - var(--safe-inset-right));
+  --safe-height: calc(var(--app-height, 100vh) - var(--safe-inset-top) - var(--safe-inset-bottom));
   --fit-width: calc(var(--safe-width) - (var(--sleek-gutter) * 2));
   --fit-height: calc(var(--safe-height) - (var(--sleek-gutter) * 2));
   --frame-scale: min(1, calc(var(--fit-width) / 393), calc(var(--fit-height) / 852));
-  width: 100vw;
-  height: 100vh;
-  height: 100svh;
-  height: 100dvh;
+  width: var(--app-width, 100vw);
+  height: var(--app-height, 100vh);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -24,6 +21,9 @@
     calc(var(--safe-inset-left) + var(--sleek-gutter));
   background: #1a0a1e;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 .phone-frame-shell {
@@ -184,7 +184,7 @@
 
 .next-btn {
   right: 18px;
-  bottom: calc(36px + var(--next-button-safe-lift));
+  bottom: 36px;
   font-size: 78px;
   font-weight: 700;
   letter-spacing: -8px;
@@ -407,7 +407,7 @@
 
 .challenge-next-btn {
   right: 16px;
-  bottom: calc(24px + var(--next-button-safe-lift));
+  bottom: 24px;
   font-size: 72px;
 }
 
@@ -635,7 +635,7 @@
 
 .entry-next-btn {
   right: 16px;
-  bottom: calc(22px + var(--next-button-safe-lift));
+  bottom: 22px;
   font-size: 74px;
 }
 
@@ -993,7 +993,7 @@
 
 .scanner-complete-next-btn {
   right: 14px;
-  bottom: calc(22px + var(--next-button-safe-lift));
+  bottom: 22px;
   font-size: 72px;
 }
 

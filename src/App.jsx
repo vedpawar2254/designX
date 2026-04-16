@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 
 const SCREEN_STORAGE_KEY = 'designx-current-screen'
@@ -109,6 +109,33 @@ function App() {
   const scannerGVideoRef = useRef(null)
   const scannerNVideoRef = useRef(null)
   const scannerXVideoRef = useRef(null)
+
+  // JS-driven viewport measurement — works on every phone
+  useEffect(() => {
+    const updateViewport = () => {
+      const vp = window.visualViewport
+      const w = vp ? vp.width : window.innerWidth
+      const h = vp ? vp.height : window.innerHeight
+      document.documentElement.style.setProperty('--app-height', `${h}px`)
+      document.documentElement.style.setProperty('--app-width', `${w}px`)
+    }
+    updateViewport()
+    const vp = window.visualViewport
+    if (vp) {
+      vp.addEventListener('resize', updateViewport)
+      vp.addEventListener('scroll', updateViewport)
+    }
+    window.addEventListener('resize', updateViewport)
+    window.addEventListener('orientationchange', updateViewport)
+    return () => {
+      if (vp) {
+        vp.removeEventListener('resize', updateViewport)
+        vp.removeEventListener('scroll', updateViewport)
+      }
+      window.removeEventListener('resize', updateViewport)
+      window.removeEventListener('orientationchange', updateViewport)
+    }
+  }, [])
 
   useEffect(() => {
     if (screen !== 'intro') return
@@ -293,7 +320,8 @@ function App() {
     }, SPLASH_TRANSITION_MS)
   }
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    if (e) e.stopPropagation()
     const previous = previousScreenMap[screen]
     if (!previous) return
     setScreen(previous)
@@ -304,6 +332,13 @@ function App() {
     if (!next) return
     setScreen(next)
   }
+
+  // Tap anywhere on a screen to advance
+  const handleScreenTap = useCallback((e) => {
+    if (e.target.closest('button, a, video')) return
+    const next = nextScreenMap[screen]
+    if (next) setScreen(next)
+  }, [screen])
 
   return (
     <main className="app-shell">
@@ -323,6 +358,7 @@ function App() {
 
         <section
           className={`screen intro-screen ${screen === 'intro' ? 'is-active' : 'is-hidden'}`}
+          onClick={handleScreenTap}
         >
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
@@ -359,6 +395,7 @@ function App() {
 
         <section
           className={`screen challenge-screen ${screen === 'challenge-1' ? 'is-active' : 'is-hidden'}`}
+          onClick={handleScreenTap}
         >
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
@@ -396,6 +433,7 @@ function App() {
 
         <section
           className={`screen challenge-screen challenge-screen-two ${screen === 'challenge-2' ? 'is-active' : 'is-hidden'}`}
+          onClick={handleScreenTap}
         >
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
@@ -432,6 +470,7 @@ function App() {
 
         <section
           className={`screen challenge-screen challenge-screen-three ${screen === 'challenge-3' ? 'is-active' : 'is-hidden'}`}
+          onClick={handleScreenTap}
         >
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
@@ -466,7 +505,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen play-screen ${screen === 'play' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen play-screen ${screen === 'play' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -486,7 +525,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen entry-screen ${screen === 'entry-1' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen entry-screen ${screen === 'entry-1' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -519,7 +558,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen ${screen === 'scanner' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen ${screen === 'scanner' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -554,7 +593,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen scanner-complete-screen ${screen === 'scanner-complete' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-complete-screen ${screen === 'scanner-complete' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -588,7 +627,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen scanner-screen-e ${screen === 'scanner-e' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen scanner-screen-e ${screen === 'scanner-e' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -626,7 +665,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen scanner-complete-screen scanner-e-complete-screen ${screen === 'scanner-e-complete' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-complete-screen scanner-e-complete-screen ${screen === 'scanner-e-complete' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -661,7 +700,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen scanner-screen-s ${screen === 'scanner-s' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen scanner-screen-s ${screen === 'scanner-s' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -699,7 +738,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen scanner-complete-screen scanner-s-complete-screen ${screen === 'scanner-s-complete' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-complete-screen scanner-s-complete-screen ${screen === 'scanner-s-complete' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -734,7 +773,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen scanner-screen-i ${screen === 'scanner-i' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen scanner-screen-i ${screen === 'scanner-i' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -772,7 +811,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen scanner-complete-screen scanner-i-complete-screen ${screen === 'scanner-i-complete' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-complete-screen scanner-i-complete-screen ${screen === 'scanner-i-complete' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -807,7 +846,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen scanner-screen-g ${screen === 'scanner-g' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen scanner-screen-g ${screen === 'scanner-g' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -845,7 +884,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen scanner-complete-screen scanner-g-complete-screen ${screen === 'scanner-g-complete' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-complete-screen scanner-g-complete-screen ${screen === 'scanner-g-complete' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -880,7 +919,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen scanner-screen-n ${screen === 'scanner-n' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen scanner-screen-n ${screen === 'scanner-n' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -918,7 +957,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen scanner-complete-screen scanner-n-complete-screen ${screen === 'scanner-n-complete' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-complete-screen scanner-n-complete-screen ${screen === 'scanner-n-complete' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -961,7 +1000,7 @@ function App() {
           </button>
         </section>
 
-        <section className={`screen scanner-screen scanner-screen-x ${screen === 'scanner-x' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen scanner-screen scanner-screen-x ${screen === 'scanner-x' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
@@ -999,7 +1038,7 @@ function App() {
           ) : null}
         </section>
 
-        <section className={`screen final-screen ${screen === 'final' ? 'is-active' : 'is-hidden'}`}>
+        <section className={`screen final-screen ${screen === 'final' ? 'is-active' : 'is-hidden'}`} onClick={handleScreenTap}>
           <div className="grid-overlay" />
           <button className="back-btn" type="button" aria-label="Go back" onClick={handleBack}>
             &#8249;
