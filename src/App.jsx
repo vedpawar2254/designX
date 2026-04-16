@@ -110,14 +110,13 @@ function App() {
   const scannerNVideoRef = useRef(null)
   const scannerXVideoRef = useRef(null)
 
-  // JS-driven scaling — compute scale from actual viewport, set as CSS var
+  // JS-driven scaling — fill the phone screen edge to edge
   useEffect(() => {
     const updateScale = () => {
       const vp = window.visualViewport
       const w = vp ? vp.width : window.innerWidth
       const h = vp ? vp.height : window.innerHeight
-      // 0.97 factor gives a small margin so nothing clips
-      const scale = Math.min(1, (w / 393) * 0.97, (h / 852) * 0.97)
+      const scale = Math.min(w / 393, h / 852)
       document.documentElement.style.setProperty('--frame-scale', scale.toFixed(4))
     }
     updateScale()
