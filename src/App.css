@@ -1,10 +1,14 @@
 .app-shell {
-  --frame-scale: min(1, calc((100vw - 24px) / 393), calc((100svh - 24px) / 852));
-  min-height: 100svh;
+  --safe-width: calc(100vw - env(safe-area-inset-left) - env(safe-area-inset-right));
+  --safe-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  --frame-scale: min(calc(var(--safe-width) / 393), calc(var(--safe-height) / 852));
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px;
+  padding: 0;
   background: #1a0a1e;
   overflow: hidden;
 }
