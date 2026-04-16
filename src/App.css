@@ -285,7 +285,7 @@
 
 .screen.is-active .neero-character,
 .screen.is-active .challenge-neero {
-  animation: neero-slide-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: neero-slide-in 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .speech-bubble {
@@ -481,14 +481,7 @@
 }
 
 .play-bubble::after {
-  content: '';
-  position: absolute;
-  left: 106px;
-  bottom: -36px;
-  width: 54px;
-  height: 42px;
-  background: #f4f4f6;
-  clip-path: polygon(0 0, 100% 0, 20% 100%);
+  display: none;
 }
 
 .play-bubble p {
@@ -642,7 +635,7 @@
   position: absolute;
   z-index: 1;
   left: 50%;
-  top: 130px;
+  top: 90px;
   transform: translateX(-50%);
   margin: 0;
   color: #d99ac8;
@@ -658,7 +651,7 @@
   position: absolute;
   z-index: 6;
   left: 50%;
-  top: 144px;
+  top: 100px;
   transform: translateX(-50%);
   margin: 0;
   display: flex;
@@ -687,7 +680,7 @@
   position: absolute;
   z-index: 6;
   left: 50%;
-  top: 144px;
+  top: 100px;
   transform: translateX(-50%);
   margin: 0;
   display: flex;
@@ -718,7 +711,7 @@
   position: absolute;
   z-index: 6;
   left: 50%;
-  top: 144px;
+  top: 100px;
   transform: translateX(-50%);
   margin: 0;
   display: flex;
@@ -773,7 +766,7 @@
   position: absolute;
   z-index: 4;
   left: 30px;
-  top: 244px;
+  top: 200px;
   width: 334px;
   border: 0;
   background: transparent;
@@ -835,7 +828,7 @@
   z-index: 5;
   left: 0;
   right: 0;
-  bottom: 54px;
+  bottom: 86px;
   margin: 0;
   text-align: center;
   color: #f8f3fb;
@@ -1473,7 +1466,7 @@
   z-index: 4;
   left: 10px;
   right: 10px;
-  bottom: 258px;
+  bottom: 56px;
   margin: 0;
   text-align: center;
   color: #f8f5fb;
