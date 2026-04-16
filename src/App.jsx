@@ -116,7 +116,8 @@ function App() {
       const vp = window.visualViewport
       const w = vp ? vp.width : window.innerWidth
       const h = vp ? vp.height : window.innerHeight
-      const scale = Math.min(w / 393, (h / 852) * 0.98)
+      // Scale to FILL the screen (no gaps/edges), shell clips overflow
+      const scale = Math.max(w / 393, h / 852)
       document.documentElement.style.setProperty('--frame-scale', scale.toFixed(4))
     }
     updateScale()

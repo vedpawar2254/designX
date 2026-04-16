@@ -14,13 +14,14 @@
 .phone-frame-shell {
   width: calc(393px * var(--frame-scale, 0.5));
   height: calc(852px * var(--frame-scale, 0.5));
+  flex-shrink: 0;
 }
 
 .phone-frame {
   position: relative;
   width: 393px;
   height: 852px;
-  overflow: hidden;
+  overflow: visible;
   transform: scale(var(--frame-scale, 0.5));
   transform-origin: top left;
 }
