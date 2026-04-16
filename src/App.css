@@ -4,6 +4,7 @@
   --safe-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-inset-left: env(safe-area-inset-left, 0px);
   --sleek-gutter: clamp(8px, 2.2vmin, 18px);
+  --next-button-safe-lift: clamp(10px, 2.8vmin, 22px);
   --safe-width: calc(100vw - var(--safe-inset-left) - var(--safe-inset-right));
   --safe-height: calc(100dvh - var(--safe-inset-top) - var(--safe-inset-bottom));
   --fit-width: calc(var(--safe-width) - (var(--sleek-gutter) * 2));
@@ -183,10 +184,11 @@
 
 .next-btn {
   right: 18px;
-  bottom: 36px;
+  bottom: calc(36px + var(--next-button-safe-lift));
   font-size: 78px;
   font-weight: 700;
   letter-spacing: -8px;
+  line-height: 0.84;
   opacity: 0.95;
   padding: 0;
 }
@@ -405,7 +407,7 @@
 
 .challenge-next-btn {
   right: 16px;
-  bottom: 24px;
+  bottom: calc(24px + var(--next-button-safe-lift));
   font-size: 72px;
 }
 
@@ -633,7 +635,7 @@
 
 .entry-next-btn {
   right: 16px;
-  bottom: 22px;
+  bottom: calc(22px + var(--next-button-safe-lift));
   font-size: 74px;
 }
 
@@ -991,7 +993,7 @@
 
 .scanner-complete-next-btn {
   right: 14px;
-  bottom: 22px;
+  bottom: calc(22px + var(--next-button-safe-lift));
   font-size: 72px;
 }
 
