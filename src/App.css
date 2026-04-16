@@ -135,6 +135,21 @@
   filter: drop-shadow(0 10px 16px rgba(69, 18, 0, 0.45));
 }
 
+.splash-tap-hint {
+  margin: 28px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  animation: splash-hint-pulse 2s ease-in-out infinite;
+}
+
+@keyframes splash-hint-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+
 .intro-screen,
 .challenge-screen,
 .play-screen,
@@ -664,7 +679,7 @@
 
 .scanner-e-rest {
   color: #cd91bd;
-  opacity: 0.34;
+  opacity: 0.15;
 }
 
 .scanner-s-watermark {
@@ -693,7 +708,7 @@
 
 .scanner-s-rest {
   color: #cd91bd;
-  opacity: 0.34;
+  opacity: 0.15;
 }
 
 .scanner-i-watermark,
@@ -728,7 +743,7 @@
 .scanner-g-rest,
 .scanner-n-rest {
   color: #cd91bd;
-  opacity: 0.34;
+  opacity: 0.15;
 }
 
 .scanner-dots-left {
@@ -1587,7 +1602,7 @@
     opacity: 0;
   }
   to {
-    opacity: 0.3;
+    opacity: 0.15;
   }
 }
 

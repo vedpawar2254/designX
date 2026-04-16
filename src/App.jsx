@@ -116,7 +116,7 @@ function App() {
       const vp = window.visualViewport
       const w = vp ? vp.width : window.innerWidth
       const h = vp ? vp.height : window.innerHeight
-      const scale = Math.min(w / 393, h / 852)
+      const scale = Math.min(w / 393, (h / 852) * 0.98)
       document.documentElement.style.setProperty('--frame-scale', scale.toFixed(4))
     }
     updateScale()
@@ -353,6 +353,7 @@ function App() {
             <p className="welcome-text typing-text">WELCOME TO</p>
             <h1 className="logo-text animated-title">DESIGN</h1>
             <img className="pixel-x-large" src="/assets/pixel-x.svg" alt="DesignX logo" />
+            <p className="splash-tap-hint">tap to continue</p>
           </div>
         </section>
 
